@@ -462,7 +462,7 @@ impl ScalableData {
         }
 
         let details = WasmDetails {
-            label: "child_group_canister".to_string(),
+            label: "child_report_canister".to_string(),
             bytes,
             wasm_type: CanisterType::ScalableChild,
             wasm_version: WasmVersion::Version(version),
@@ -496,8 +496,8 @@ impl ScalableData {
             reports.append(&mut canister_data);
         }
 
-        let ordered_groups = Self::get_ordered_reports(reports, sort);
-        get_paged_data(ordered_groups, limit, page)
+        let ordered_reports = Self::get_ordered_reports(reports, sort);
+        get_paged_data(ordered_reports, limit, page)
     }
 
     async fn get_filtered_child_data(
