@@ -8,6 +8,8 @@ use ic_scalable_misc::{
 };
 use shared::report_model::{PostReport, ReportFilter, ReportResponse, ReportSort};
 
+// This method is used to add a report to the canister,
+// The method is async because it optionally creates a new canister
 #[update]
 #[candid_method(update)]
 async fn add_report(
@@ -21,6 +23,7 @@ async fn add_report(
     }
 }
 
+// This method is used to get a report from the canister
 #[update]
 #[candid_method(update)]
 async fn get_report(
@@ -34,6 +37,7 @@ async fn get_report(
     }
 }
 
+// This method is used to get reports filtered and sorted with pagination
 #[update]
 #[candid_method(update)]
 async fn get_reports(
@@ -58,6 +62,10 @@ async fn get_reports(
     }
 }
 
+// COMPOSITE_QUERY PREPARATION
+// This methods is used by the parent canister to get filtered reports from the (this) child canister
+// Data serialized and send as byte array chunks ` (bytes, (start_chunk, end_chunk)) `
+// The parent canister can then deserialize the data and pass it to the frontend
 #[query]
 #[candid_method(query)]
 fn get_chunked_data(

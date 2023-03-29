@@ -6,7 +6,6 @@ use ic_scalable_misc::{
         api_error_type::{ApiError, ApiErrorType},
         filter_type::FilterType,
         sort_type::SortDirection,
-        whitelist_rights_type::WhitelistRights,
     },
     helpers::{
         error_helper::api_error,
@@ -32,6 +31,7 @@ thread_local! {
 pub struct Store;
 
 impl Store {
+    // Method to add a report to the canister
     pub async fn add_report(
         caller: Principal,
         post_report: PostReport,
@@ -57,7 +57,7 @@ impl Store {
             Ok((identifier, report)) => Ok(Self::map_to_report_response(identifier, report)),
         }
     }
-
+    // Method to get a single report
     pub fn get_report(
         identifier: Principal,
         group_identifier: Principal,
@@ -81,6 +81,7 @@ impl Store {
         })
     }
 
+    // This method is used to get reports filtered and sorted with pagination
     pub fn get_reports(
         limit: usize,
         page: usize,
@@ -91,28 +92,37 @@ impl Store {
     ) -> PagedResponse<ReportResponse> {
         DATA.with(|data| {
             let get_result = Data::get_entries(data);
+            // Get groups for filtering and sorting
             let reports: Vec<ReportResponse> = get_result
                 .iter()
+                // Filter reports by group identifier
                 .filter(|r| r.1.group_identifier == group_identifier)
                 .map(|(identifier, report)| {
                     Self::map_to_report_response(identifier.clone(), report.clone())
                 })
                 .collect();
 
+            // Get filtered reports
             let filtered_reports = Self::get_filtered_reports(reports, filters, filter_type);
+            // Get ordered reports
             let ordered_reports = Self::get_ordered_reports(filtered_reports, sort);
-
+            // Paginate reports and return
             get_paged_data(ordered_reports, limit, page)
         })
     }
 
+    // Used for composite_query calls from the parent canister
+    //
+    // Method to get filtered groups serialized and chunked
     pub fn get_chunked_data(
         filters: Vec<ReportFilter>,
         filter_type: FilterType,
         chunk: usize,
         max_bytes_per_chunk: usize,
     ) -> (Vec<u8>, (usize, usize)) {
+        // Get reports for filtering
         let reports = DATA.with(|data| Data::get_entries(data));
+        // Map reports to report response
         let mapped_reports: Vec<ReportResponse> = reports
             .iter()
             .map(|(_identifier, _report_data)| {
@@ -120,30 +130,42 @@ impl Store {
             })
             .collect();
 
+        // Get filtered reports
         let filtered_groups = Self::get_filtered_reports(mapped_reports, filters, filter_type);
+
+        // Serialize filtered reports
         if let Ok(bytes) = serialize(&filtered_groups) {
+            // Check if the bytes of the serialized reports are greater than the max bytes per chunk specified as an argument
             if bytes.len() >= max_bytes_per_chunk {
+                // Get the start and end index of the bytes to be returned
                 let start = chunk * max_bytes_per_chunk;
                 let end = (chunk + 1) * (max_bytes_per_chunk);
 
+                // Get the bytes to be returned, if the end index is greater than the length of the bytes, return the remaining bytes
                 let response = if end >= bytes.len() {
                     bytes[start..].to_vec()
                 } else {
                     bytes[start..end].to_vec()
                 };
 
+                // Determine the max number of chunks that can be returned, a float is used because the number of chunks can be a decimal in this step
                 let mut max_chunks: f64 = 0.00;
                 if max_bytes_per_chunk < bytes.len() {
                     max_chunks = (bytes.len() / max_bytes_per_chunk) as f64;
                 }
+
+                // return the response and start and end chunk index, the end chunk index is calculated by rounding up the max chunks
                 return (response, (chunk, max_chunks.ceil() as usize));
             }
+            // if the bytes of the serialized groups are less than the max bytes per chunk specified as an argument, return the bytes and start and end chunk index as 0
             return (bytes, (0, 0));
         } else {
+            // if the groups cant be serialized return an empty vec and start and end chunk index as 0
             return (vec![], (0, 0));
         }
     }
 
+    // Method to map report to report response
     fn map_to_report_response(identifier: Principal, report: Report) -> ReportResponse {
         ReportResponse {
             identifier,
@@ -156,6 +178,7 @@ impl Store {
         }
     }
 
+    // Method to get filtered reports
     fn get_filtered_reports(
         mut reports: Vec<ReportResponse>,
         filters: Vec<ReportFilter>,
@@ -163,6 +186,7 @@ impl Store {
     ) -> Vec<ReportResponse> {
         use FilterType::*;
         match filter_type {
+            // this filter type will return groups that match all the filters
             And => {
                 for filter in filters {
                     use ReportFilter::*;
@@ -196,6 +220,7 @@ impl Store {
                 }
                 reports
             }
+            // This filter type will return reports that match any of the filters
             Or => {
                 let mut hashmap_reports: HashMap<Principal, ReportResponse> = HashMap::new();
                 for filter in filters {
@@ -233,6 +258,7 @@ impl Store {
         }
     }
 
+    // Method to get sorted reports
     fn get_ordered_reports(
         mut reports: Vec<ReportResponse>,
         sort: ReportSort,
@@ -263,6 +289,7 @@ impl Store {
         reports
     }
 
+    // This method is used for role / permission based access control
     pub async fn can_write(
         caller: Principal,
         group_identifier: Principal,
@@ -277,6 +304,7 @@ impl Store {
         .await
     }
 
+    // This method is used for role / permission based access control
     pub async fn can_read(
         caller: Principal,
         group_identifier: Principal,
@@ -291,6 +319,7 @@ impl Store {
         .await
     }
 
+    // This method is used for role / permission based access control
     pub async fn can_edit(
         caller: Principal,
         group_identifier: Principal,
@@ -305,6 +334,7 @@ impl Store {
         .await
     }
 
+    // This method is used for role / permission based access control
     pub async fn can_delete(
         caller: Principal,
         group_identifier: Principal,
@@ -319,6 +349,7 @@ impl Store {
         .await
     }
 
+    // This method is used for role / permission based access control
     async fn check_permission(
         caller: Principal,
         group_identifier: Principal,

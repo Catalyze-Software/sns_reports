@@ -8,6 +8,8 @@ use shared::report_model::{ReportFilter, ReportResponse, ReportSort};
 
 use super::store::ScalableData;
 
+// Method used to get all the reports from the child canisters filtered, sorted and paged
+// requires composite queries to be released to mainnet
 #[query(composite = true)]
 #[candid_method(query)]
 async fn get_reports(

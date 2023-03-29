@@ -35,14 +35,7 @@ async fn close_child_canister_and_spawn_sibling(
     entry: Vec<u8>,
     principal_entry_reference: Option<Principal>,
 ) -> Result<Principal, ApiError> {
-    ScalableData::close_child_canister_and_spawn_sibling(
-        caller(),
-        owner,
-        last_entry_id,
-        entry,
-        principal_entry_reference,
-    )
-    .await
+    ScalableData::close_child_canister_and_spawn_sibling(caller(), last_entry_id, entry).await
 }
 
 #[query]
