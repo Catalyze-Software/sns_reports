@@ -1,5 +1,4 @@
-use candid::Principal;
-use ic_cdk::export::candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 use ic_scalable_misc::{enums::sort_type::SortDirection, models::date_models::DateRange};
 use serde::Serialize;
 

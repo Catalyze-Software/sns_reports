@@ -4,7 +4,7 @@ use ic_scalable_misc::{
     enums::filter_type::FilterType, models::paged_response_models::PagedResponse,
 };
 
-use crate::models::report_model::{ReportFilter, ReportResponse, ReportSort};
+use shared::report_model::{ReportFilter, ReportResponse, ReportSort};
 
 use super::store::ScalableData;
 

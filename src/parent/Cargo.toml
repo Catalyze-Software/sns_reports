@@ -1,5 +1,5 @@
 [package]
-name = "canister"
+name = "parent"
 version = "0.1.0"
 edition = "2018"
 
@@ -19,3 +19,4 @@ ic-cdk-macros = "0.6.8"
 candid = "0.8.2"
 serde = "1.0"
 ic_scalable_misc = "0.2.40"
+shared = {path = "../shared"}

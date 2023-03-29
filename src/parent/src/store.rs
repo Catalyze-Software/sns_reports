@@ -27,7 +27,7 @@ use ic_scalable_misc::{
     },
 };
 
-use crate::models::report_model::{ReportFilter, ReportResponse, ReportSort};
+use shared::report_model::{ReportFilter, ReportResponse, ReportSort};
 
 #[derive(CandidType, Clone, Deserialize)]
 pub struct ScalableMetaData {
@@ -432,7 +432,7 @@ impl ScalableData {
         old_store: &ScalableData,
         version: u64,
     ) -> Result<WasmDetails, String> {
-        let bytes = include_bytes!("../../../../wasm/demo_child_canister.wasm").to_vec();
+        let bytes = include_bytes!("../../../wasm/child.wasm").to_vec();
 
         if bytes.is_empty() {
             return Err("No WASM found, skipping child WASM update".to_string());
