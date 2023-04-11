@@ -1,0 +1,89 @@
+type ApiError = variant {
+  SerializeError : ErrorMessage;
+  DeserializeError : ErrorMessage;
+  NotFound : ErrorMessage;
+  ValidationError : vec ValidationResponse;
+  CanisterAtCapacity : ErrorMessage;
+  UpdateRequired : UpdateMessage;
+  Unauthorized : ErrorMessage;
+  Unexpected : ErrorMessage;
+  BadRequest : ErrorMessage;
+};
+type DateRange = record { end_date : nat64; start_date : nat64 };
+type ErrorMessage = record {
+  tag : text;
+  message : text;
+  inputs : opt vec text;
+  location : text;
+};
+type FilterType = variant { Or; And };
+type HttpHeader = record { value : text; name : text };
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : vec nat8;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  status : nat;
+  body : vec nat8;
+  headers : vec HttpHeader;
+};
+type PagedResponse = record {
+  total : nat64;
+  data : vec ReportResponse;
+  page : nat64;
+  limit : nat64;
+  number_of_pages : nat64;
+};
+type PostReport = record {
+  subject : principal;
+  group_identifier : principal;
+  message : text;
+};
+type ReportFilter = variant {
+  Kind : text;
+  ReportedBy : principal;
+  CreatedOn : DateRange;
+};
+type ReportResponse = record {
+  subject : principal;
+  group_identifier : principal;
+  subject_kind : text;
+  created_on : nat64;
+  message : text;
+  reported_by : principal;
+  identifier : principal;
+};
+type ReportSort = variant {
+  Id : SortDirection;
+  Kind : SortDirection;
+  CreatedOn : SortDirection;
+};
+type Result = variant { Ok; Err : ApiError };
+type Result_1 = variant { Ok : ReportResponse; Err : ApiError };
+type Result_2 = variant { Ok : PagedResponse; Err : ApiError };
+type SortDirection = variant { Asc; Desc };
+type UpdateMessage = record { canister_principal : principal; message : text };
+type ValidationResponse = record { field : text; message : text };
+service : (principal, text, nat64) -> {
+  __get_candid_interface_tmp_hack : () -> (text) query;
+  accept_cycles : () -> (nat64);
+  add_entry_by_parent : (vec nat8) -> (Result);
+  add_report : (PostReport, principal, principal) -> (Result_1);
+  get_chunked_data : (vec ReportFilter, FilterType, nat64, nat64) -> (
+      vec nat8,
+      record { nat64; nat64 },
+    ) query;
+  get_report : (principal, principal, principal) -> (Result_1);
+  get_reports : (
+      nat64,
+      nat64,
+      ReportSort,
+      vec ReportFilter,
+      FilterType,
+      principal,
+      principal,
+    ) -> (Result_2);
+  http_request : (HttpRequest) -> (HttpResponse) query;
+}

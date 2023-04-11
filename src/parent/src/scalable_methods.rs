@@ -30,10 +30,8 @@ fn get_canisters() -> Vec<ScalableCanisterDetails> {
 #[update]
 #[candid_method(update)]
 async fn close_child_canister_and_spawn_sibling(
-    owner: Principal,
     last_entry_id: u64,
     entry: Vec<u8>,
-    principal_entry_reference: Option<Principal>,
 ) -> Result<Principal, ApiError> {
     ScalableData::close_child_canister_and_spawn_sibling(caller(), last_entry_id, entry).await
 }
