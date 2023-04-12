@@ -24,6 +24,8 @@ use std::{cell::RefCell, collections::HashMap};
 
 use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
 
+use crate::IDENTIFIER_KIND;
+
 thread_local! {
     pub static DATA: RefCell<Data<Report>> = RefCell::new(Data::default());
 }
@@ -43,7 +45,9 @@ impl Store {
             created_on: time(),
             group_identifier: post_report.group_identifier,
         };
-        match DATA.with(|data| Data::add_entry(data, new_report.clone(), Some("rpt".to_string()))) {
+        match DATA.with(|data| {
+            Data::add_entry(data, new_report.clone(), Some(IDENTIFIER_KIND.to_string()))
+        }) {
             Err(err) => match err {
                 ApiError::CanisterAtCapacity(message) => {
                     let _data = DATA.with(|v| v.borrow().clone());

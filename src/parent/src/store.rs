@@ -23,7 +23,6 @@ use ic_scalable_misc::{
     models::{
         canister_models::ScalableCanisterDetails, identifier_model::Identifier,
         paged_response_models::PagedResponse, wasm_models::WasmDetails,
-        whitelist_models::WhitelistEntry,
     },
 };
 
@@ -403,37 +402,17 @@ impl ScalableData {
         version: u64,
     ) -> Result<WasmDetails, String> {
         // Get the WASM from the file system
-        let bytes = include_bytes!("../../../wasm/child.wasm").to_vec();
+        let bytes = include_bytes!("../../../wasm/child.wasm.gz").to_vec();
 
-        // Check if the wasm bytes are empty
-        if bytes.is_empty() {
-            return Err("No WASM found, skipping child WASM update".to_string());
-        }
+        // // Check if the wasm bytes are empty
+        // if bytes.is_empty() {
+        //     return Err("No WASM found, skipping child WASM update".to_string());
+        // }
 
-        // Check if the WASM is the same as the previous one
-        if old_store.child_wasm_data.bytes == bytes {
-            return Err("WASM is the same, skipping child WASM update".to_string());
-        }
-
-        // If the wasm bytes are unique
-        if old_store.child_wasm_data.bytes != bytes {
-            match old_store.child_wasm_data.wasm_version {
-                WasmVersion::None => {}
-                WasmVersion::Version(_version) => {
-                    // Check if the version is incremented
-                    if version <= _version {
-                        return Err(format!(
-                            "Please provide a higher version as {_version}, skipping child WASM update"
-                        )
-                        .to_string());
-                    }
-                }
-                // If the WASM version is custom, throw an error
-                WasmVersion::Custom => {
-                    return Err("Wrong WASM version type, skipping child WASM update".to_string())
-                }
-            }
-        }
+        // // Check if the WASM is the same as the previous one
+        // if old_store.child_wasm_data.bytes == bytes {
+        //     return Err("WASM is the same, skipping child WASM update".to_string());
+        // }
 
         // Create the WASM details
         let details = WasmDetails {
