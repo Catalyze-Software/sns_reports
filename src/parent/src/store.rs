@@ -404,15 +404,15 @@ impl ScalableData {
         // Get the WASM from the file system
         let bytes = include_bytes!("../../../wasm/child.wasm.gz").to_vec();
 
-        // // Check if the wasm bytes are empty
-        // if bytes.is_empty() {
-        //     return Err("No WASM found, skipping child WASM update".to_string());
-        // }
+        // Check if the wasm bytes are empty
+        if bytes.is_empty() {
+            return Err("No WASM found, skipping child WASM update".to_string());
+        }
 
-        // // Check if the WASM is the same as the previous one
-        // if old_store.child_wasm_data.bytes == bytes {
-        //     return Err("WASM is the same, skipping child WASM update".to_string());
-        // }
+        // Check if the WASM is the same as the previous one
+        if old_store.child_wasm_data.bytes == bytes {
+            return Err("WASM is the same, skipping child WASM update".to_string());
+        }
 
         // Create the WASM details
         let details = WasmDetails {
