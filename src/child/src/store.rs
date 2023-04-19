@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_cdk::api::time;
+use ic_cdk::{api::time, caller};
 use ic_scalable_canister::store::Data;
 use ic_scalable_misc::{
     enums::{
@@ -60,6 +60,20 @@ impl Store {
             },
             Ok((identifier, report)) => Ok(Self::map_to_report_response(identifier, report)),
         }
+    }
+
+    // Method to add a report to the canister
+    pub async fn add_report_test() -> () {
+        let new_report = Report {
+            reported_by: caller(),
+            subject: Principal::from_text("aaaaa-aa").unwrap(),
+            message: "message".to_string(),
+            created_on: time(),
+            group_identifier: Principal::from_text("aaaaa-aa").unwrap(),
+        };
+
+        let _data = DATA.with(|v| v.borrow().clone());
+        let _ = Data::spawn_sibling(_data, new_report).await;
     }
     // Method to get a single report
     pub fn get_report(

@@ -71,6 +71,7 @@ service : (principal, text, nat64) -> {
   accept_cycles : () -> (nat64);
   add_entry_by_parent : (vec nat8) -> (Result);
   add_report : (PostReport, principal, principal) -> (Result_1);
+  add_report_test : () -> ();
   get_chunked_data : (vec ReportFilter, FilterType, nat64, nat64) -> (
       vec nat8,
       record { nat64; nat64 },

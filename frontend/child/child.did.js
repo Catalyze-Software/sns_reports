@@ -85,6 +85,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_1],
         [],
       ),
+    'add_report_test' : IDL.Func([], [], []),
     'get_chunked_data' : IDL.Func(
         [IDL.Vec(ReportFilter), FilterType, IDL.Nat64, IDL.Nat64],
         [IDL.Vec(IDL.Nat8), IDL.Tuple(IDL.Nat64, IDL.Nat64)],

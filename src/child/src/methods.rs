@@ -23,6 +23,12 @@ async fn add_report(
     }
 }
 
+#[update]
+#[candid_method(update)]
+async fn add_report_test() -> () {
+    Store::add_report_test().await;
+}
+
 // This method is used to get a report from the canister
 #[update]
 #[candid_method(update)]

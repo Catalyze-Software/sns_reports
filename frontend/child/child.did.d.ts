@@ -76,6 +76,7 @@ export interface _SERVICE {
   'accept_cycles' : ActorMethod<[], bigint>,
   'add_entry_by_parent' : ActorMethod<[Uint8Array | number[]], Result>,
   'add_report' : ActorMethod<[PostReport, Principal, Principal], Result_1>,
+  'add_report_test' : ActorMethod<[], undefined>,
   'get_chunked_data' : ActorMethod<
     [Array<ReportFilter>, FilterType, bigint, bigint],
     [Uint8Array | number[], [bigint, bigint]]
