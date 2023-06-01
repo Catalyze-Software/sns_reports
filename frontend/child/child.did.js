@@ -76,6 +76,13 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(HttpHeader),
   });
+  const Report = IDL.Record({
+    'subject' : IDL.Principal,
+    'group_identifier' : IDL.Principal,
+    'created_on' : IDL.Nat64,
+    'message' : IDL.Text,
+    'reported_by' : IDL.Principal,
+  });
   return IDL.Service({
     '__get_candid_interface_tmp_hack' : IDL.Func([], [IDL.Text], ['query']),
     'accept_cycles' : IDL.Func([], [IDL.Nat64], []),
@@ -110,6 +117,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
+    'migration_add_reports' : IDL.Func(
+        [IDL.Vec(IDL.Tuple(IDL.Principal, Report))],
+        [],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => {

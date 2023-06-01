@@ -41,6 +41,13 @@ type PostReport = record {
   group_identifier : principal;
   message : text;
 };
+type Report = record {
+  subject : principal;
+  group_identifier : principal;
+  created_on : nat64;
+  message : text;
+  reported_by : principal;
+};
 type ReportFilter = variant {
   Kind : text;
   ReportedBy : principal;
@@ -87,4 +94,5 @@ service : (principal, text, nat64) -> {
       principal,
     ) -> (Result_2);
   http_request : (HttpRequest) -> (HttpResponse) query;
+  migration_add_reports : (vec record { principal; Report }) -> ();
 }

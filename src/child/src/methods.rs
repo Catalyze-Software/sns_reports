@@ -1,3 +1,5 @@
+use std::{collections::HashMap, iter::FromIterator};
+
 use super::store::{Store, DATA};
 use candid::{candid_method, Principal};
 use ic_cdk::{caller, query};
@@ -6,8 +8,20 @@ use ic_scalable_misc::{
     enums::{api_error_type::ApiError, filter_type::FilterType},
     models::paged_response_models::PagedResponse,
 };
-use shared::report_model::{PostReport, ReportFilter, ReportResponse, ReportSort};
+use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
 
+#[update]
+#[candid_method(update)]
+pub fn migration_add_reports(reports: Vec<(Principal, Report)>) -> () {
+    if caller()
+        == Principal::from_text("ledm3-52ncq-rffuv-6ed44-hg5uo-iicyu-pwkzj-syfva-heo4k-p7itq-aqe")
+            .unwrap()
+    {
+        DATA.with(|data| {
+            data.borrow_mut().entries = HashMap::from_iter(reports);
+        })
+    }
+}
 // This method is used to add a report to the canister,
 // The method is async because it optionally creates a new canister
 #[update]

@@ -43,6 +43,13 @@ export interface PostReport {
   'group_identifier' : Principal,
   'message' : string,
 }
+export interface Report {
+  'subject' : Principal,
+  'group_identifier' : Principal,
+  'created_on' : bigint,
+  'message' : string,
+  'reported_by' : Principal,
+}
 export type ReportFilter = { 'Kind' : string } |
   { 'ReportedBy' : Principal } |
   { 'CreatedOn' : DateRange };
@@ -95,4 +102,8 @@ export interface _SERVICE {
     Result_2
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
+  'migration_add_reports' : ActorMethod<
+    [Array<[Principal, Report]>],
+    undefined
+  >,
 }
