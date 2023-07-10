@@ -18,6 +18,7 @@ pub fn migration_add_reports(reports: Vec<(Principal, Report)>) -> () {
             .unwrap()
     {
         DATA.with(|data| {
+            data.borrow_mut().current_entry_id = reports.clone().len() as u64;
             data.borrow_mut().entries = HashMap::from_iter(reports);
         })
     }
