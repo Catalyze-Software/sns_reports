@@ -2,8 +2,7 @@ use std::{collections::HashMap, iter::FromIterator};
 
 use super::store::{Store, DATA};
 use candid::{candid_method, Principal};
-use ic_cdk::{caller, query};
-use ic_cdk_macros::update;
+use ic_cdk::{caller, query, update};
 use ic_scalable_misc::{
     enums::{api_error_type::ApiError, filter_type::FilterType},
     models::paged_response_models::PagedResponse,
@@ -11,7 +10,6 @@ use ic_scalable_misc::{
 use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
 
 #[update]
-#[candid_method(update)]
 pub fn migration_add_reports(reports: Vec<(Principal, Report)>) -> () {
     if caller()
         == Principal::from_text("ledm3-52ncq-rffuv-6ed44-hg5uo-iicyu-pwkzj-syfva-heo4k-p7itq-aqe")
@@ -26,7 +24,6 @@ pub fn migration_add_reports(reports: Vec<(Principal, Report)>) -> () {
 // This method is used to add a report to the canister,
 // The method is async because it optionally creates a new canister
 #[update]
-#[candid_method(update)]
 async fn add_report(
     value: PostReport,
     group_identifier: Principal,
@@ -38,15 +35,8 @@ async fn add_report(
     }
 }
 
-#[update]
-#[candid_method(update)]
-async fn add_report_test() -> () {
-    Store::add_report_test().await;
-}
-
 // This method is used to get a report from the canister
 #[update]
-#[candid_method(update)]
 async fn get_report(
     identifier: Principal,
     group_identifier: Principal,
@@ -60,7 +50,6 @@ async fn get_report(
 
 // This method is used to get reports filtered and sorted with pagination
 #[update]
-#[candid_method(update)]
 async fn get_reports(
     limit: usize,
     page: usize,
@@ -88,7 +77,6 @@ async fn get_reports(
 // Data serialized and send as byte array chunks ` (bytes, (start_chunk, end_chunk)) `
 // The parent canister can then deserialize the data and pass it to the frontend
 #[query]
-#[candid_method(query)]
 fn get_chunked_data(
     filters: Vec<ReportFilter>,
     filter_type: FilterType,

@@ -8,7 +8,7 @@ use ic_scalable_misc::{
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::Serialize;
 
-#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Report {
     pub reported_by: Principal,
     pub subject: Principal,
