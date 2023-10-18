@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_cdk::{api::time, caller};
+use ic_cdk::api::time;
 use ic_scalable_canister::store::Data;
 use ic_scalable_misc::{
     enums::{
@@ -40,14 +40,14 @@ thread_local! {
     // NEW STABLE
     pub static STABLE_DATA: RefCell<StableCell<Data, Memory>> = RefCell::new(
         StableCell::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0))),
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1))),
             Data::default(),
         ).expect("failed")
     );
 
     pub static ENTRIES: RefCell<StableBTreeMap<String, Report, Memory>> = RefCell::new(
         StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1))),
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2))),
         )
     );
 

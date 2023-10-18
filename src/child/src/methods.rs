@@ -1,7 +1,7 @@
 use std::{collections::HashMap, iter::FromIterator};
 
 use super::store::{Store, DATA};
-use candid::{candid_method, Principal};
+use candid::Principal;
 use ic_cdk::{caller, query, update};
 use ic_scalable_misc::{
     enums::{api_error_type::ApiError, filter_type::FilterType},
