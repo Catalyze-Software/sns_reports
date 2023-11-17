@@ -24,7 +24,7 @@ use std::{cell::RefCell, collections::HashMap};
 
 use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
 
-use crate::IDENTIFIER_KIND;
+use crate::{validate::validate_post_report, IDENTIFIER_KIND};
 
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
@@ -62,34 +62,39 @@ impl Store {
         caller: Principal,
         post_report: PostReport,
     ) -> Result<ReportResponse, ApiError> {
-        let new_report = Report {
-            reported_by: caller,
-            subject: post_report.subject,
-            message: post_report.message,
-            created_on: time(),
-            group_identifier: post_report.group_identifier,
-        };
-        match STABLE_DATA.with(|data| {
-            ENTRIES.with(|entries| {
-                Data::add_entry(
-                    data,
-                    entries,
-                    new_report.clone(),
-                    Some(IDENTIFIER_KIND.to_string()),
-                )
-            })
-        }) {
-            Err(err) => match err {
-                ApiError::CanisterAtCapacity(message) => {
-                    let _data = STABLE_DATA.with(|v| v.borrow().get().clone());
-                    match Data::spawn_sibling(&_data, new_report).await {
-                        Ok(_) => Err(ApiError::CanisterAtCapacity(message)),
-                        Err(err) => Err(err),
-                    }
+        match validate_post_report(post_report.clone()) {
+            Err(err) => Err(err),
+            Ok(_) => {
+                let new_report = Report {
+                    reported_by: caller,
+                    subject: post_report.subject,
+                    message: post_report.message,
+                    created_on: time(),
+                    group_identifier: post_report.group_identifier,
+                };
+                match STABLE_DATA.with(|data| {
+                    ENTRIES.with(|entries| {
+                        Data::add_entry(
+                            data,
+                            entries,
+                            new_report.clone(),
+                            Some(IDENTIFIER_KIND.to_string()),
+                        )
+                    })
+                }) {
+                    Err(err) => match err {
+                        ApiError::CanisterAtCapacity(message) => {
+                            let _data = STABLE_DATA.with(|v| v.borrow().get().clone());
+                            match Data::spawn_sibling(&_data, new_report).await {
+                                Ok(_) => Err(ApiError::CanisterAtCapacity(message)),
+                                Err(err) => Err(err),
+                            }
+                        }
+                        _ => Err(err),
+                    },
+                    Ok((identifier, report)) => Ok(Self::map_to_report_response(identifier, report)),
                 }
-                _ => Err(err),
-            },
-            Ok((identifier, report)) => Ok(Self::map_to_report_response(identifier, report)),
+            }
         }
     }
 
