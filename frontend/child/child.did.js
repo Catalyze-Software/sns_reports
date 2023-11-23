@@ -93,6 +93,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_report_test' : IDL.Func([], [], []),
+    'backup_data' : IDL.Func([], [IDL.Text], []),
+    'clear_backup' : IDL.Func([], [], []),
+    'download_chunk' : IDL.Func(
+        [IDL.Nat64],
+        [IDL.Tuple(IDL.Nat64, IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    'finalize_upload' : IDL.Func([], [IDL.Text], []),
     'get_chunked_data' : IDL.Func(
         [IDL.Vec(ReportFilter), FilterType, IDL.Nat64, IDL.Nat64],
         [IDL.Vec(IDL.Nat8), IDL.Tuple(IDL.Nat64, IDL.Nat64)],
@@ -119,6 +127,13 @@ export const idlFactory = ({ IDL }) => {
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'migration_add_reports' : IDL.Func(
         [IDL.Vec(IDL.Tuple(IDL.Principal, Report))],
+        [],
+        [],
+      ),
+    'restore_data' : IDL.Func([], [], []),
+    'total_chunks' : IDL.Func([], [IDL.Nat64], ['query']),
+    'upload_chunk' : IDL.Func(
+        [IDL.Tuple(IDL.Nat64, IDL.Vec(IDL.Nat8))],
         [],
         [],
       ),
