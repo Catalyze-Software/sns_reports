@@ -79,6 +79,10 @@ service : (principal, text, nat64) -> {
   add_entry_by_parent : (vec nat8) -> (Result);
   add_report : (PostReport, principal, principal) -> (Result_1);
   add_report_test : () -> ();
+  backup_data : () -> (text);
+  clear_backup : () -> ();
+  download_chunk : (nat64) -> (record { nat64; vec nat8 }) query;
+  finalize_upload : () -> (text);
   get_chunked_data : (vec ReportFilter, FilterType, nat64, nat64) -> (
       vec nat8,
       record { nat64; nat64 },
@@ -95,4 +99,7 @@ service : (principal, text, nat64) -> {
     ) -> (Result_2);
   http_request : (HttpRequest) -> (HttpResponse) query;
   migration_add_reports : (vec record { principal; Report }) -> ();
+  restore_data : () -> ();
+  total_chunks : () -> (nat64) query;
+  upload_chunk : (record { nat64; vec nat8 }) -> ();
 }
