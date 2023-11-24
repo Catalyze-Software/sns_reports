@@ -84,6 +84,10 @@ export interface _SERVICE {
   'add_entry_by_parent' : ActorMethod<[Uint8Array | number[]], Result>,
   'add_report' : ActorMethod<[PostReport, Principal, Principal], Result_1>,
   'add_report_test' : ActorMethod<[], undefined>,
+  'backup_data' : ActorMethod<[], string>,
+  'clear_backup' : ActorMethod<[], undefined>,
+  'download_chunk' : ActorMethod<[bigint], [bigint, Uint8Array | number[]]>,
+  'finalize_upload' : ActorMethod<[], string>,
   'get_chunked_data' : ActorMethod<
     [Array<ReportFilter>, FilterType, bigint, bigint],
     [Uint8Array | number[], [bigint, bigint]]
@@ -106,4 +110,7 @@ export interface _SERVICE {
     [Array<[Principal, Report]>],
     undefined
   >,
+  'restore_data' : ActorMethod<[], undefined>,
+  'total_chunks' : ActorMethod<[], bigint>,
+  'upload_chunk' : ActorMethod<[[bigint, Uint8Array | number[]]], undefined>,
 }
