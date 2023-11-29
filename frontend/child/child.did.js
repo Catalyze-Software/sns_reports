@@ -93,6 +93,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_report_test' : IDL.Func([], [], []),
+    'backup_data' : IDL.Func([], [IDL.Text], []),
+    'download_chunk' : IDL.Func(
+        [IDL.Nat64],
+        [IDL.Tuple(IDL.Nat64, IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
     'get_chunked_data' : IDL.Func(
         [IDL.Vec(ReportFilter), FilterType, IDL.Nat64, IDL.Nat64],
         [IDL.Vec(IDL.Nat8), IDL.Tuple(IDL.Nat64, IDL.Nat64)],
@@ -122,6 +128,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'total_chunks' : IDL.Func([], [IDL.Nat64], ['query']),
   });
 };
 export const init = ({ IDL }) => {
