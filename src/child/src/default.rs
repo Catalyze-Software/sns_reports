@@ -1,32 +1,17 @@
 use candid::Principal;
-use ic_cdk::{caller, init, post_upgrade, pre_upgrade, query, update};
+use ic_cdk::{caller, init, query, update};
 
-#[allow(unused_imports)]
-use ic_scalable_canister::{ic_methods, store::Data};
-use ic_scalable_misc::{
+use ic_scalable_canister::ic_scalable_misc::{
     enums::api_error_type::ApiError,
     models::http_models::{HttpRequest, HttpResponse},
 };
-use ic_stable_structures::memory_manager::MemoryId;
+#[allow(unused_imports)]
+use ic_scalable_canister::{ic_methods, store::Data};
 
 use crate::{
-    store::{DATA, ENTRIES, MEMORY_MANAGER, STABLE_DATA},
+    store::{ENTRIES, STABLE_DATA},
     IDENTIFIER_KIND,
 };
-
-// Stores the data in stable storage before upgrading the canister.
-#[pre_upgrade]
-pub fn pre_upgrade() {
-    let memory = MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0)));
-    DATA.with(|data| ic_methods::deprecated_pre_upgrade(data, memory))
-}
-
-// Restores the data from stable- to heap storage after upgrading the canister.
-#[post_upgrade]
-pub fn post_upgrade() {
-    let memory = MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0)));
-    DATA.with(|data| ic_methods::deprecated_post_upgrade(data, memory))
-}
 
 // This call get triggered when a new canister is spun up
 // the data is passed along to the new canister as a byte array
@@ -75,11 +60,12 @@ pub fn init(parent: Principal, name: String, identifier: usize) {
 #[query(name = "__get_candid_interface_tmp_hack")]
 pub fn __export_did_tmp_() -> String {
     use candid::{export_service, Principal};
+    use ic_canister_backup::models::*;
     use ic_cdk::api::management_canister::http_request::HttpResponse;
-    use ic_scalable_misc::enums::api_error_type::ApiError;
-    use ic_scalable_misc::enums::filter_type::FilterType;
-    use ic_scalable_misc::models::http_models::HttpRequest;
-    use ic_scalable_misc::models::paged_response_models::PagedResponse;
+    use ic_scalable_canister::ic_scalable_misc::enums::api_error_type::ApiError;
+    use ic_scalable_canister::ic_scalable_misc::enums::filter_type::FilterType;
+    use ic_scalable_canister::ic_scalable_misc::models::http_models::HttpRequest;
+    use ic_scalable_canister::ic_scalable_misc::models::paged_response_models::PagedResponse;
     use shared::report_model::*;
     export_service!();
     __export_service()
@@ -88,6 +74,6 @@ pub fn __export_did_tmp_() -> String {
 // Method used to save the candid interface to a file
 #[test]
 pub fn candid() {
-    use ic_scalable_misc::helpers::candid_helper::save_candid;
+    use ic_scalable_canister::ic_scalable_misc::helpers::candid_helper::save_candid;
     save_candid(__export_did_tmp_(), String::from("child"));
 }

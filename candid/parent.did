@@ -84,6 +84,6 @@ service : () -> {
   get_latest_wasm_version : () -> (WasmVersion) query;
   get_reports : (nat64, nat64, vec ReportFilter, FilterType, ReportSort) -> (
       PagedResponse,
-    ) query;
+    ) composite_query;
   http_request : (HttpRequest) -> (HttpResponse) query;
 }

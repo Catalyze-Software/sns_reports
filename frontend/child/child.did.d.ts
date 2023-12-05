@@ -43,13 +43,6 @@ export interface PostReport {
   'group_identifier' : Principal,
   'message' : string,
 }
-export interface Report {
-  'subject' : Principal,
-  'group_identifier' : Principal,
-  'created_on' : bigint,
-  'message' : string,
-  'reported_by' : Principal,
-}
 export type ReportFilter = { 'Kind' : string } |
   { 'ReportedBy' : Principal } |
   { 'CreatedOn' : DateRange };
@@ -83,7 +76,9 @@ export interface _SERVICE {
   'accept_cycles' : ActorMethod<[], bigint>,
   'add_entry_by_parent' : ActorMethod<[Uint8Array | number[]], Result>,
   'add_report' : ActorMethod<[PostReport, Principal, Principal], Result_1>,
-  'add_report_test' : ActorMethod<[], undefined>,
+  'clear_backup' : ActorMethod<[], undefined>,
+  'download_chunk' : ActorMethod<[bigint], [bigint, Uint8Array | number[]]>,
+  'finalize_upload' : ActorMethod<[], string>,
   'get_chunked_data' : ActorMethod<
     [Array<ReportFilter>, FilterType, bigint, bigint],
     [Uint8Array | number[], [bigint, bigint]]
@@ -102,8 +97,7 @@ export interface _SERVICE {
     Result_2
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'migration_add_reports' : ActorMethod<
-    [Array<[Principal, Report]>],
-    undefined
-  >,
+  'restore_data' : ActorMethod<[], undefined>,
+  'total_chunks' : ActorMethod<[], bigint>,
+  'upload_chunk' : ActorMethod<[[bigint, Uint8Array | number[]]], undefined>,
 }

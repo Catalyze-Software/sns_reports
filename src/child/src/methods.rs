@@ -1,26 +1,14 @@
-use std::{collections::HashMap, iter::FromIterator};
+use crate::store::STABLE_DATA;
 
-use super::store::{Store, DATA};
+use super::store::Store;
 use candid::Principal;
 use ic_cdk::{caller, query, update};
-use ic_scalable_misc::{
+use ic_scalable_canister::ic_scalable_misc::{
     enums::{api_error_type::ApiError, filter_type::FilterType},
     models::paged_response_models::PagedResponse,
 };
-use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
+use shared::report_model::{PostReport, ReportFilter, ReportResponse, ReportSort};
 
-#[update]
-pub fn migration_add_reports(reports: Vec<(Principal, Report)>) -> () {
-    if caller()
-        == Principal::from_text("ledm3-52ncq-rffuv-6ed44-hg5uo-iicyu-pwkzj-syfva-heo4k-p7itq-aqe")
-            .unwrap()
-    {
-        DATA.with(|data| {
-            data.borrow_mut().current_entry_id = reports.clone().len() as u64;
-            data.borrow_mut().entries = HashMap::from_iter(reports);
-        })
-    }
-}
 // This method is used to add a report to the canister,
 // The method is async because it optionally creates a new canister
 #[update]
@@ -83,7 +71,7 @@ fn get_chunked_data(
     chunk: usize,
     max_bytes_per_chunk: usize,
 ) -> (Vec<u8>, (usize, usize)) {
-    if caller() != DATA.with(|data| data.borrow().parent) {
+    if caller() != STABLE_DATA.with(|data| data.borrow().get().parent) {
         return (vec![], (0, 0));
     }
 
