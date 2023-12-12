@@ -40,6 +40,38 @@ export const idlFactory = ({ IDL }) => {
     'identifier' : IDL.Principal,
   });
   const Result_1 = IDL.Variant({ 'Ok' : ReportResponse, 'Err' : ApiError });
+  const CanisterStatusType = IDL.Variant({
+    'stopped' : IDL.Null,
+    'stopping' : IDL.Null,
+    'running' : IDL.Null,
+  });
+  const DefiniteCanisterSettings = IDL.Record({
+    'freezing_threshold' : IDL.Nat,
+    'controllers' : IDL.Vec(IDL.Principal),
+    'memory_allocation' : IDL.Nat,
+    'compute_allocation' : IDL.Nat,
+  });
+  const CanisterStatusResponse = IDL.Record({
+    'status' : CanisterStatusType,
+    'memory_size' : IDL.Nat,
+    'cycles' : IDL.Nat,
+    'settings' : DefiniteCanisterSettings,
+    'idle_cycles_burned_per_day' : IDL.Nat,
+    'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const RejectionCode = IDL.Variant({
+    'NoError' : IDL.Null,
+    'CanisterError' : IDL.Null,
+    'SysTransient' : IDL.Null,
+    'DestinationInvalid' : IDL.Null,
+    'Unknown' : IDL.Null,
+    'SysFatal' : IDL.Null,
+    'CanisterReject' : IDL.Null,
+  });
+  const Result_2 = IDL.Variant({
+    'Ok' : IDL.Tuple(CanisterStatusResponse),
+    'Err' : IDL.Tuple(RejectionCode, IDL.Text),
+  });
   const DateRange = IDL.Record({
     'end_date' : IDL.Nat64,
     'start_date' : IDL.Nat64,
@@ -63,7 +95,7 @@ export const idlFactory = ({ IDL }) => {
     'limit' : IDL.Nat64,
     'number_of_pages' : IDL.Nat64,
   });
-  const Result_2 = IDL.Variant({ 'Ok' : PagedResponse, 'Err' : ApiError });
+  const Result_3 = IDL.Variant({ 'Ok' : PagedResponse, 'Err' : ApiError });
   const HttpRequest = IDL.Record({
     'url' : IDL.Text,
     'method' : IDL.Text,
@@ -85,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_1],
         [],
       ),
+    'canister_status' : IDL.Func([], [Result_2], []),
     'clear_backup' : IDL.Func([], [], []),
     'download_chunk' : IDL.Func(
         [IDL.Nat64],
@@ -112,7 +145,7 @@ export const idlFactory = ({ IDL }) => {
           IDL.Principal,
           IDL.Principal,
         ],
-        [Result_2],
+        [Result_3],
         [],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
