@@ -9,7 +9,22 @@ type ApiError = variant {
   Unexpected : ErrorMessage;
   BadRequest : ErrorMessage;
 };
+type CanisterStatusResponse = record {
+  status : CanisterStatusType;
+  memory_size : nat;
+  cycles : nat;
+  settings : DefiniteCanisterSettings;
+  idle_cycles_burned_per_day : nat;
+  module_hash : opt vec nat8;
+};
+type CanisterStatusType = variant { stopped; stopping; running };
 type DateRange = record { end_date : nat64; start_date : nat64 };
+type DefiniteCanisterSettings = record {
+  freezing_threshold : nat;
+  controllers : vec principal;
+  memory_allocation : nat;
+  compute_allocation : nat;
+};
 type ErrorMessage = record {
   tag : text;
   message : text;
@@ -41,12 +56,14 @@ type PostReport = record {
   group_identifier : principal;
   message : text;
 };
-type Report = record {
-  subject : principal;
-  group_identifier : principal;
-  created_on : nat64;
-  message : text;
-  reported_by : principal;
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
 };
 type ReportFilter = variant {
   Kind : text;
@@ -69,7 +86,11 @@ type ReportSort = variant {
 };
 type Result = variant { Ok; Err : ApiError };
 type Result_1 = variant { Ok : ReportResponse; Err : ApiError };
-type Result_2 = variant { Ok : PagedResponse; Err : ApiError };
+type Result_2 = variant {
+  Ok : record { CanisterStatusResponse };
+  Err : record { RejectionCode; text };
+};
+type Result_3 = variant { Ok : PagedResponse; Err : ApiError };
 type SortDirection = variant { Asc; Desc };
 type UpdateMessage = record { canister_principal : principal; message : text };
 type ValidationResponse = record { field : text; message : text };
@@ -78,8 +99,7 @@ service : (principal, text, nat64) -> {
   accept_cycles : () -> (nat64);
   add_entry_by_parent : (vec nat8) -> (Result);
   add_report : (PostReport, principal, principal) -> (Result_1);
-  add_report_test : () -> ();
-  backup_data : () -> (text);
+  canister_status : () -> (Result_2);
   clear_backup : () -> ();
   download_chunk : (nat64) -> (record { nat64; vec nat8 }) query;
   finalize_upload : () -> (text);
@@ -96,9 +116,8 @@ service : (principal, text, nat64) -> {
       FilterType,
       principal,
       principal,
-    ) -> (Result_2);
+    ) -> (Result_3);
   http_request : (HttpRequest) -> (HttpResponse) query;
-  migration_add_reports : (vec record { principal; Report }) -> ();
   restore_data : () -> ();
   total_chunks : () -> (nat64) query;
   upload_chunk : (record { nat64; vec nat8 }) -> ();

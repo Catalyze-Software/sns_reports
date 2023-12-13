@@ -110,7 +110,7 @@ export const idlFactory = ({ IDL }) => {
     'get_reports' : IDL.Func(
         [IDL.Nat64, IDL.Nat64, IDL.Vec(ReportFilter), FilterType, ReportSort],
         [PagedResponse],
-        ['query'],
+        ['composite_query'],
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
   });
