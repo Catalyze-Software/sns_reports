@@ -10,7 +10,24 @@ export type ApiError = { 'SerializeError' : ErrorMessage } |
   { 'Unauthorized' : ErrorMessage } |
   { 'Unexpected' : ErrorMessage } |
   { 'BadRequest' : ErrorMessage };
+export interface CanisterStatusResponse {
+  'status' : CanisterStatusType,
+  'memory_size' : bigint,
+  'cycles' : bigint,
+  'settings' : DefiniteCanisterSettings,
+  'idle_cycles_burned_per_day' : bigint,
+  'module_hash' : [] | [Uint8Array | number[]],
+}
+export type CanisterStatusType = { 'stopped' : null } |
+  { 'stopping' : null } |
+  { 'running' : null };
 export interface DateRange { 'end_date' : bigint, 'start_date' : bigint }
+export interface DefiniteCanisterSettings {
+  'freezing_threshold' : bigint,
+  'controllers' : Array<Principal>,
+  'memory_allocation' : bigint,
+  'compute_allocation' : bigint,
+}
 export interface ErrorMessage {
   'tag' : string,
   'message' : string,
@@ -43,13 +60,13 @@ export interface PostReport {
   'group_identifier' : Principal,
   'message' : string,
 }
-export interface Report {
-  'subject' : Principal,
-  'group_identifier' : Principal,
-  'created_on' : bigint,
-  'message' : string,
-  'reported_by' : Principal,
-}
+export type RejectionCode = { 'NoError' : null } |
+  { 'CanisterError' : null } |
+  { 'SysTransient' : null } |
+  { 'DestinationInvalid' : null } |
+  { 'Unknown' : null } |
+  { 'SysFatal' : null } |
+  { 'CanisterReject' : null };
 export type ReportFilter = { 'Kind' : string } |
   { 'ReportedBy' : Principal } |
   { 'CreatedOn' : DateRange };
@@ -69,7 +86,9 @@ export type Result = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type Result_1 = { 'Ok' : ReportResponse } |
   { 'Err' : ApiError };
-export type Result_2 = { 'Ok' : PagedResponse } |
+export type Result_2 = { 'Ok' : [CanisterStatusResponse] } |
+  { 'Err' : [RejectionCode, string] };
+export type Result_3 = { 'Ok' : PagedResponse } |
   { 'Err' : ApiError };
 export type SortDirection = { 'Asc' : null } |
   { 'Desc' : null };
@@ -83,8 +102,7 @@ export interface _SERVICE {
   'accept_cycles' : ActorMethod<[], bigint>,
   'add_entry_by_parent' : ActorMethod<[Uint8Array | number[]], Result>,
   'add_report' : ActorMethod<[PostReport, Principal, Principal], Result_1>,
-  'add_report_test' : ActorMethod<[], undefined>,
-  'backup_data' : ActorMethod<[], string>,
+  'canister_status' : ActorMethod<[], Result_2>,
   'clear_backup' : ActorMethod<[], undefined>,
   'download_chunk' : ActorMethod<[bigint], [bigint, Uint8Array | number[]]>,
   'finalize_upload' : ActorMethod<[], string>,
@@ -103,13 +121,9 @@ export interface _SERVICE {
       Principal,
       Principal,
     ],
-    Result_2
+    Result_3
   >,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'migration_add_reports' : ActorMethod<
-    [Array<[Principal, Report]>],
-    undefined
-  >,
   'restore_data' : ActorMethod<[], undefined>,
   'total_chunks' : ActorMethod<[], bigint>,
   'upload_chunk' : ActorMethod<[[bigint, Uint8Array | number[]]], undefined>,
