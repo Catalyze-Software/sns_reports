@@ -37,7 +37,7 @@ jobs:
             echo ${{ secrets.CATALYZE_STAGING }} | base64 --decode > catalyze_staging.pem
             dfx identity import --storage-mode=plaintext catalyze_staging catalyze_staging.pem
             dfx identity use catalyze_staging
-            dfx canister install parent --network staging --wasm wasm/parent.wasm.gz --mode upgrade --y
+            dfx canister install parent --network staging --wasm wasm/parent.wasm.gz --mode upgrade --yes
           fi
 
       - name: Check source for master
