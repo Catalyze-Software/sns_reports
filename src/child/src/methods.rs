@@ -11,7 +11,7 @@ use shared::report_model::{PostReport, ReportFilter, ReportResponse, ReportSort}
 
 // This method is used to add a report to the canister,
 // The method is async because it optionally creates a new canister
-#[update]
+#[update(guard = "auth")]
 async fn add_report(
     value: PostReport,
     group_identifier: Principal,
@@ -24,7 +24,7 @@ async fn add_report(
 }
 
 // This method is used to get a report from the canister
-#[update]
+#[update(guard = "auth")]
 async fn get_report(
     identifier: Principal,
     group_identifier: Principal,
@@ -37,7 +37,7 @@ async fn get_report(
 }
 
 // This method is used to get reports filtered and sorted with pagination
-#[update]
+#[update(guard = "auth")]
 async fn get_reports(
     limit: usize,
     page: usize,
@@ -76,4 +76,11 @@ fn get_chunked_data(
     }
 
     Store::get_chunked_data(filters, filter_type, chunk, max_bytes_per_chunk)
+}
+
+pub fn auth() -> Result<(), String> {
+    match caller() == Principal::anonymous() {
+        true => Err("Unauthorized".to_string()),
+        false => Ok(()),
+    }
 }
