@@ -1,7 +1,6 @@
 use candid::Principal;
-use ic_cdk::{api::time, caller};
-use ic_scalable_canister::store::Data;
-use ic_scalable_misc::{
+use ic_cdk::api::time;
+use ic_scalable_canister::ic_scalable_misc::{
     enums::{
         api_error_type::{ApiError, ApiErrorType},
         filter_type::FilterType,
@@ -19,15 +18,40 @@ use ic_scalable_misc::{
         permissions_models::{PermissionActionType, PermissionType},
     },
 };
+use ic_scalable_canister::store::Data;
 
 use std::{cell::RefCell, collections::HashMap};
 
 use shared::report_model::{PostReport, Report, ReportFilter, ReportResponse, ReportSort};
 
-use crate::IDENTIFIER_KIND;
+use crate::{validate::validate_post_report, IDENTIFIER_KIND};
 
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
+    {DefaultMemoryImpl, StableBTreeMap, StableCell},
+};
+
+type Memory = VirtualMemory<DefaultMemoryImpl>;
+
+pub static DATA_MEMORY_ID: MemoryId = MemoryId::new(0);
+pub static ENTRIES_MEMORY_ID: MemoryId = MemoryId::new(1);
 thread_local! {
-    pub static DATA: RefCell<Data<Report>> = RefCell::new(Data::default());
+    pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
+    RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+
+    // NEW STABLE
+    pub static STABLE_DATA: RefCell<StableCell<Data, Memory>> = RefCell::new(
+        StableCell::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(DATA_MEMORY_ID)),
+            Data::default(),
+        ).expect("failed")
+    );
+
+    pub static ENTRIES: RefCell<StableBTreeMap<String, Report, Memory>> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(ENTRIES_MEMORY_ID)),
+        )
+    );
 }
 
 pub struct Store;
@@ -38,64 +62,69 @@ impl Store {
         caller: Principal,
         post_report: PostReport,
     ) -> Result<ReportResponse, ApiError> {
-        let new_report = Report {
-            reported_by: caller,
-            subject: post_report.subject,
-            message: post_report.message,
-            created_on: time(),
-            group_identifier: post_report.group_identifier,
-        };
-        match DATA.with(|data| {
-            Data::add_entry(data, new_report.clone(), Some(IDENTIFIER_KIND.to_string()))
-        }) {
-            Err(err) => match err {
-                ApiError::CanisterAtCapacity(message) => {
-                    let _data = DATA.with(|v| v.borrow().clone());
-                    match Data::spawn_sibling(_data, new_report).await {
-                        Ok(_) => Err(ApiError::CanisterAtCapacity(message)),
-                        Err(err) => Err(err),
+        match validate_post_report(post_report.clone()) {
+            Err(err) => Err(err),
+            Ok(_) => {
+                let new_report = Report {
+                    reported_by: caller,
+                    subject: post_report.subject,
+                    message: post_report.message,
+                    created_on: time(),
+                    group_identifier: post_report.group_identifier,
+                };
+                match STABLE_DATA.with(|data| {
+                    ENTRIES.with(|entries| {
+                        Data::add_entry(
+                            data,
+                            entries,
+                            new_report.clone(),
+                            Some(IDENTIFIER_KIND.to_string()),
+                        )
+                    })
+                }) {
+                    Err(err) => match err {
+                        ApiError::CanisterAtCapacity(message) => {
+                            let _data = STABLE_DATA.with(|v| v.borrow().get().clone());
+                            match Data::spawn_sibling(&_data, new_report).await {
+                                Ok(_) => Err(ApiError::CanisterAtCapacity(message)),
+                                Err(err) => Err(err),
+                            }
+                        }
+                        _ => Err(err),
+                    },
+                    Ok((identifier, report)) => {
+                        Ok(Self::map_to_report_response(identifier, report))
                     }
                 }
-                _ => Err(err),
-            },
-            Ok((identifier, report)) => Ok(Self::map_to_report_response(identifier, report)),
+            }
         }
     }
 
-    // Method to add a report to the canister
-    pub async fn add_report_test() -> () {
-        let new_report = Report {
-            reported_by: caller(),
-            subject: Principal::from_text("aaaaa-aa").unwrap(),
-            message: "message".to_string(),
-            created_on: time(),
-            group_identifier: Principal::from_text("aaaaa-aa").unwrap(),
-        };
-
-        let _data = DATA.with(|v| v.borrow().clone());
-        let _ = Data::spawn_sibling(_data, new_report).await;
-    }
     // Method to get a single report
     pub fn get_report(
         identifier: Principal,
         group_identifier: Principal,
     ) -> Result<ReportResponse, ApiError> {
-        DATA.with(|data| match Data::get_entry(data, identifier) {
-            Err(err) => Err(err),
-            Ok((_identifier, _result)) => {
-                if _result.group_identifier != group_identifier {
-                    return Err(api_error(
-                        ApiErrorType::Unauthorized,
-                        "REPORT_NOT_FOUND",
-                        "Report does not belong to the group",
-                        DATA.with(|data| Data::get_name(data)).as_str(),
-                        "get_report",
-                        None,
-                    ));
-                } else {
-                    Ok(Self::map_to_report_response(_identifier, _result))
+        STABLE_DATA.with(|data| {
+            ENTRIES.with(|entries| match Data::get_entry(data, entries, identifier) {
+                Err(err) => Err(err),
+                Ok((_identifier, _result)) => {
+                    if _result.group_identifier != group_identifier {
+                        return Err(api_error(
+                            ApiErrorType::Unauthorized,
+                            "REPORT_NOT_FOUND",
+                            "Report does not belong to the group",
+                            STABLE_DATA
+                                .with(|data| Data::get_name(data.borrow().get()))
+                                .as_str(),
+                            "get_report",
+                            None,
+                        ));
+                    } else {
+                        Ok(Self::map_to_report_response(_identifier, _result))
+                    }
                 }
-            }
+            })
         })
     }
 
@@ -108,15 +137,18 @@ impl Store {
         filter_type: FilterType,
         group_identifier: Principal,
     ) -> PagedResponse<ReportResponse> {
-        DATA.with(|data| {
-            let get_result = Data::get_entries(data);
+        ENTRIES.with(|entries| {
+            let get_result = Data::get_entries(entries);
             // Get groups for filtering and sorting
             let reports: Vec<ReportResponse> = get_result
                 .iter()
                 // Filter reports by group identifier
                 .filter(|r| r.1.group_identifier == group_identifier)
                 .map(|(identifier, report)| {
-                    Self::map_to_report_response(identifier.clone(), report.clone())
+                    Self::map_to_report_response(
+                        Principal::from_text(identifier).expect("failed"),
+                        report.clone(),
+                    )
                 })
                 .collect();
 
@@ -139,12 +171,15 @@ impl Store {
         max_bytes_per_chunk: usize,
     ) -> (Vec<u8>, (usize, usize)) {
         // Get reports for filtering
-        let reports = DATA.with(|data| Data::get_entries(data));
+        let reports = ENTRIES.with(|entries| Data::get_entries(entries));
         // Map reports to report response
         let mapped_reports: Vec<ReportResponse> = reports
             .iter()
             .map(|(_identifier, _report_data)| {
-                Self::map_to_report_response(_identifier.clone(), _report_data.clone())
+                Self::map_to_report_response(
+                    Principal::from_text(_identifier).expect("failed"),
+                    _report_data.clone(),
+                )
             })
             .collect();
 
@@ -384,7 +419,9 @@ impl Store {
                         ApiErrorType::Unauthorized,
                         "PRINCIPAL_MISMATCH",
                         "Principal mismatch",
-                        DATA.with(|data| Data::get_name(data)).as_str(),
+                        STABLE_DATA
+                            .with(|data| Data::get_name(data.borrow().get()))
+                            .as_str(),
                         "check_permission",
                         None,
                     ));
@@ -405,7 +442,9 @@ impl Store {
                                 ApiErrorType::Unauthorized,
                                 "NO_PERMISSION",
                                 "No permission",
-                                DATA.with(|data| Data::get_name(data)).as_str(),
+                                STABLE_DATA
+                                    .with(|data| Data::get_name(data.borrow().get()))
+                                    .as_str(),
                                 "check_permission",
                                 None,
                             ));
@@ -417,7 +456,9 @@ impl Store {
                         ApiErrorType::Unauthorized,
                         "NO_PERMISSION",
                         err.as_str(),
-                        DATA.with(|data| Data::get_name(data)).as_str(),
+                        STABLE_DATA
+                            .with(|data| Data::get_name(data.borrow().get()))
+                            .as_str(),
                         "check_permission",
                         None,
                     )),
@@ -427,7 +468,9 @@ impl Store {
                 ApiErrorType::Unauthorized,
                 "NO_PERMISSION",
                 err.as_str(),
-                DATA.with(|data| Data::get_name(data)).as_str(),
+                STABLE_DATA
+                    .with(|data| Data::get_name(data.borrow().get()))
+                    .as_str(),
                 "check_permission",
                 None,
             )),
